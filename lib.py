@@ -22,8 +22,9 @@ def hash_func(ip: str):
     return hash(ip) % 2
 
 
-def read(ip: str, key: str, SSF_id: int | None = None):
+def read(ip: str, key: str, SSF_id: int):
     log_ip = log_nodes_ip_list[hash_func(ip)]
+    global step_id
     step_id += 1
     resp = httpx.post(
         f"http://{log_ip}/read",
@@ -41,6 +42,7 @@ def read(ip: str, key: str, SSF_id: int | None = None):
 
 def write(ip: str, key: str, value: any, SSF_id: int | None = None):
     log_ip = log_nodes_ip_list[hash_func(ip)]
+    global step_id
     step_id += 1
     resp = httpx.post(
         f"http://{log_ip}/write",
