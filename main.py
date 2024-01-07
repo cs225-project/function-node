@@ -54,7 +54,11 @@ class FUNC(Process):
         try:
             self.run_test()
         except Exception as e:
-            print(e)
+            if not self.flag:
+                self.flag = True
+                self.run_test()
+            else:
+                print(e)
         finally:
             self.exit_wrapper()
             self.dump_result()
@@ -68,7 +72,7 @@ class FUNC(Process):
 
         temp: list[CmdItem] = []
         for cmd in self.cmd_list:
-            for _ in range(3):
+            for _ in range(10):
                 temp.append(
                     CmdItem(
                         random.choice(["w", "r"]),
@@ -82,7 +86,10 @@ class FUNC(Process):
         self.cmd_list.extend(temp)
 
     def run_test(self):
-        for cmd in self.cmd_list:
+        for i, cmd in enumerate(self.cmd_list):
+            if (not self.flag) and (i == len(self.cmd_list) * 1 / 2):
+                raise Exception()
+
             match cmd.op:
                 case "w":
                     self.write_wrapper(cmd.ip, cmd.key, cmd.val)
