@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from typing import Any
 import httpx
 import socket
 import orjson
@@ -25,15 +27,22 @@ def hash_func(ip: str):
 client = httpx.Client()
 
 
-def read(ip: str, key: str, SSF_id: int):
+@dataclass
+class ResType:
+    status: int
+    message: str
+    data: int
+
+
+# ip: 数据库的地址
+def read(ip: str, key: str, SSF_id: int) -> ResType:
     log_ip = log_nodes_ip_list[hash_func(ip)]
     global step_id
-    step_id += 1
     # global client
     resp = client.post(
         f"http://{log_ip}/read",
         json={
-            "ip": ip,
+            "db_address": ip,
             "key": key,
             "ssf_id": SSF_id,
             "step_id": step_id,
@@ -41,16 +50,17 @@ def read(ip: str, key: str, SSF_id: int):
         },
     )
     return orjson.loads(resp.content)
+    # return ResType(**orjson.loads(resp.content))
 
 
-def write(ip: str, key: str, value: any, SSF_id: int):
+def write(ip: str, key: str, value: int | str, SSF_id: int) -> ResType:
     log_ip = log_nodes_ip_list[hash_func(ip)]
     global step_id
     step_id += 1
     resp = client.post(
         f"http://{log_ip}/write",
         json={
-            "ip": ip,
+            "db_address": ip,
             "key": key,
             "value": value,
             "ssf_id": SSF_id,
@@ -66,7 +76,6 @@ def exit(ip: str, SSF_id: int):
     client.post(
         f"http://{log_ip}/exit",
         json={
-            "ip": ip,
             "ssf_id": SSF_id,
         },
     )
