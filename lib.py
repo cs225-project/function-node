@@ -30,8 +30,8 @@ client = httpx.Client()
 @dataclass
 class ResType:
     status: int
-    message: str
     data: int
+    message: str = " "
 
 
 # ip: 数据库的地址
@@ -49,8 +49,8 @@ def read(ip: str, key: str, SSF_id: int) -> ResType:
             "version": 1,
         },
     )
-    return orjson.loads(resp.content)
-    # return ResType(**orjson.loads(resp.content))
+    # return orjson.loads(resp.content)
+    return ResType(**orjson.loads(resp.content))
 
 
 def write(ip: str, key: str, value: int | str, SSF_id: int) -> ResType:
@@ -83,7 +83,7 @@ def exit(ip: str, SSF_id: int):
 
 
 if __name__ == "__main__":
-    resp = read("192.168.0.1", "height", 1, 1)
+    resp = read("192.168.0.1", "height", 1)
     print(resp)
-    resp = write("192.168.0.1", "height", 1, 1, 1)
-    print(resp)
+    # resp = write("192.168.0.1", "height", 1, 1, 1)
+    # print(resp)

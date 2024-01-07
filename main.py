@@ -49,13 +49,13 @@ class FUNC(Process):
             print(e)
         finally:
             self.exit_wrapper()
-            self.dump_result()
+            # self.dump_result()
 
     def gen_test_cmds(self):
         key_list_temp = [chr(i) for i in range(ord("a"), ord("z") + 1)]  # 26个英文字母
         self.key_list = random.sample(key_list_temp, 1)
         self.cmd_list = [
-            CmdItem("r", random.choice(self.ip_list), k, 1) for k in self.key_list
+            CmdItem("w", random.choice(self.ip_list), k, 1) for k in self.key_list
         ]  # 先执行wrtie，保证一定有这些key
 
         temp: list[CmdItem] = []
@@ -72,6 +72,7 @@ class FUNC(Process):
 
         random.shuffle(temp)
         self.cmd_list.extend(temp)
+        print(self.cmd_list)
         # self.cmd_list = temp
 
     def run_test(self):
@@ -82,13 +83,12 @@ class FUNC(Process):
                 case "r":
                     res = self.read_wrapper(cmd.ip, cmd.key)
                     if not self.flag:
-                        self.result.append(Result(cmd.key, res["data"]))
+                        self.result.append(Result(cmd.key, res.data))
                     else:
-                        self.retry_result.append(Result(cmd.key, res["data"]))
+                        self.retry_result.append(Result(cmd.key, res.data))
 
     def dump_result(self):
         print(self.result)
-        pass
 
     def read_wrapper(self, ip: str, key: str):
         err_num = 0
