@@ -37,12 +37,17 @@ class FUNC(Process):
         self.ip_list: list[str] = ["192.168.0.1", "192.168.0.1"]
         self.ip1 = "192.168.0.1"
         self.ip2 = "192.168.0.1"
-        super().__init__()
 
-    def run(self):
         self.result: list[Result] = []
         self.retry_result: list[Result] = []
         self.flag = False  # 表示是否重试了
+
+        self.key_list: list[str] = []
+        self.cmd_list: list[CmdItem] = []
+        super().__init__()
+
+    def run(self):
+        # 只能在run中获取id, 因为此事ident才有值
         self.ssf_id = int(str(self.prefix) + str(self.ident))
         self.gen_test_cmds()
         self.start_barrier.wait()
@@ -122,9 +127,11 @@ class FUNC(Process):
 
     def exit_wrapper(self):
         err_num = 0
+        ip_set = set(map(lambda x: x.ip, self.cmd_list))
         while err_num < 3:
             try:
-                lib.exit(self.ip2, self.ssf_id)
+                for ip in ip_set:
+                    lib.exit(ip, self.ssf_id)
                 return
             except:
                 err_num += 1
