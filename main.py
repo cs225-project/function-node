@@ -27,7 +27,10 @@ class Result:
 
 
 class FUNC(Process):
-    def __init__(self, prefix: int, start_barrier: Barrier_, end_barrier: Barrier_):
+    def __init__(
+        self, id: int, prefix: int, start_barrier: Barrier_, end_barrier: Barrier_
+    ):
+        self.id = id
         self.prefix = prefix
         self.start_barrier = start_barrier
         self.end_barrier = end_barrier
@@ -49,18 +52,18 @@ class FUNC(Process):
             print(e)
         finally:
             self.exit_wrapper()
-            # self.dump_result()
+            self.dump_result()
 
     def gen_test_cmds(self):
         key_list_temp = [chr(i) for i in range(ord("a"), ord("z") + 1)]  # 26个英文字母
-        self.key_list = random.sample(key_list_temp, 1)
+        self.key_list = random.sample(key_list_temp, 20)
         self.cmd_list = [
             CmdItem("w", random.choice(self.ip_list), k, 1) for k in self.key_list
         ]  # 先执行wrtie，保证一定有这些key
 
         temp: list[CmdItem] = []
         for cmd in self.cmd_list:
-            for _ in range(1):
+            for _ in range(3):
                 temp.append(
                     CmdItem(
                         random.choice(["w", "r"]),
@@ -72,8 +75,6 @@ class FUNC(Process):
 
         random.shuffle(temp)
         self.cmd_list.extend(temp)
-        print(self.cmd_list)
-        # self.cmd_list = temp
 
     def run_test(self):
         for cmd in self.cmd_list:
@@ -88,7 +89,14 @@ class FUNC(Process):
                         self.retry_result.append(Result(cmd.key, res.data))
 
     def dump_result(self):
-        print(self.result)
+        with open(f"./{self.id}.result", "w") as f:
+            for item in self.result:
+                f.write(f"key: {item.key}, data:{item.val}" + "\n")
+
+        if len(self.retry_result) != 0:
+            with open(f"./{self.id}.retry_result", "w") as f:
+                for item in self.retry_result:
+                    f.write(f"key: {item.key}, data:{item.val}" + "\n")
 
     def read_wrapper(self, ip: str, key: str):
         err_num = 0
@@ -129,7 +137,9 @@ if __name__ == "__main__":
     end_barrier = Barrier(2)
     res = remove_dots_to_int(socket.gethostbyname(socket.gethostname()))
     num = 2
-    funcs_list: list[FUNC] = [FUNC(res, start_barrier, end_barrier) for _ in range(num)]
+    funcs_list: list[FUNC] = [
+        FUNC(i, res, start_barrier, end_barrier) for i in range(num)
+    ]
 
     for i in range(num):
         funcs_list[i].start()
