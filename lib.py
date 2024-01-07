@@ -21,7 +21,7 @@ def int_to_ip(ip: int):
 
 def hash_func(ip: str):
     # num = ip_to_int(ip)
-    return hash(ip) % 2
+    return hash(ip) % len(log_nodes_ip_list)
 
 
 client = httpx.Client()
