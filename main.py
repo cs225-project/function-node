@@ -35,10 +35,10 @@ class FUNC(Process):
         self.start_barrier = start_barrier
         self.end_barrier = end_barrier
         self.ip_list: list[str] = [
-            "192.168.0.103",
-            "192.168.0.104",
-            "192.168.0.105",
-            "192.168.0.106",
+            "192.168.0.103:6379",
+            "192.168.0.104:6379",
+            "192.168.0.105:6379",
+            "192.168.0.106:6379",
         ]
 
         self.result: list[Result] = []

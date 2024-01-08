@@ -5,7 +5,7 @@ import socket
 import orjson
 
 # log_nodes_ip_list = ['192.168.0.2', '192.168.0.3']
-log_nodes_ip_list = ["127.0.0.1:8000", "127.0.0.1:8000"]
+log_nodes_ip_list = ["192.168.0.101:8080", "192.168.0.102:8000"]
 keys_dict = {}
 step_id = 0
 
