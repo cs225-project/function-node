@@ -34,9 +34,12 @@ class FUNC(Process):
         self.prefix = prefix
         self.start_barrier = start_barrier
         self.end_barrier = end_barrier
-        self.ip_list: list[str] = ["192.168.0.1", "192.168.0.1"]
-        self.ip1 = "192.168.0.1"
-        self.ip2 = "192.168.0.1"
+        self.ip_list: list[str] = [
+            "192.168.0.103",
+            "192.168.0.104",
+            "192.168.0.105",
+            "192.168.0.106",
+        ]
 
         self.result: list[Result] = []
         self.retry_result: list[Result] = []
@@ -65,14 +68,17 @@ class FUNC(Process):
 
     def gen_test_cmds(self):
         key_list_temp = [chr(i) for i in range(ord("a"), ord("z") + 1)]  # 26个英文字母
-        self.key_list = random.sample(key_list_temp, 20)
+        for i in range(len(key_list_temp)):
+            for j in range(i + 1, len(key_list_temp)):
+                self.key_list.append(key_list_temp[i] + key_list_temp[j])
+        # self.key_list = random.sample(key_list_temp, 20)
         self.cmd_list = [
             CmdItem("w", random.choice(self.ip_list), k, 1) for k in self.key_list
         ]  # 先执行wrtie，保证一定有这些key
 
         temp: list[CmdItem] = []
         for cmd in self.cmd_list:
-            for _ in range(10):
+            for _ in range(5):
                 temp.append(
                     CmdItem(
                         random.choice(["w", "r"]),
