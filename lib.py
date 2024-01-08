@@ -74,7 +74,7 @@ def write(ip: str, key: str, value: int | str, SSF_id: int) -> ResType:
 def exit(ip: str, SSF_id: int):
     log_ip = log_nodes_ip_list[hash_func(ip)]
     client.post(
-        f"http://{log_ip}/exit",
+        f"http://{log_ip}/clear",
         json={
             "ssf_id": SSF_id,
         },
