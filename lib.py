@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any
 import httpx
 import socket
-import orjson
+import json
 
 # log_nodes_ip_list = ['192.168.0.2', '192.168.0.3']
 log_nodes_ip_list = ["192.168.0.101:8080", "192.168.0.102:8000"]
@@ -50,7 +50,7 @@ def read(ip: str, key: str, SSF_id: int) -> ResType:
         },
     )
     # return orjson.loads(resp.content)
-    return ResType(**orjson.loads(resp.content))
+    return ResType(**json.loads(resp.content))
 
 
 def write(ip: str, key: str, value: int | str, SSF_id: int) -> ResType:
@@ -68,7 +68,7 @@ def write(ip: str, key: str, value: int | str, SSF_id: int) -> ResType:
             "version": 1,
         },
     )
-    return orjson.loads(resp.content)
+    return json.loads(resp.content)
 
 
 def exit(ip: str, SSF_id: int):
