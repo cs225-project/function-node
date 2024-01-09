@@ -6,7 +6,7 @@ import json
 
 # log_nodes_ip_list = ['192.168.0.2', '192.168.0.3']
 log_nodes_ip_list = ["192.168.0.101:8080", "192.168.0.102:8080"]
-keys_dict = {}
+step_id_dict: dict[str, dict[str, int]] = {}
 step_id = 0
 
 
@@ -36,8 +36,16 @@ class ResType:
 
 # ip: 数据库的地址
 def read(ip: str, key: str, SSF_id: int) -> ResType:
+    step_id = 1
     log_ip = log_nodes_ip_list[hash_func(ip)]
-    global step_id
+    global step_id_dict
+    if ip in step_id_dict:
+        if key in step_id_dict[ip]:
+            step_id = step_id_dict[ip][key]
+        else:
+            step_id_dict[ip][key] = 1
+    else:
+        step_id_dict[ip] = {key: 1}
     # global client
     resp = client.post(
         f"http://{log_ip}/read",
@@ -58,9 +66,16 @@ def read(ip: str, key: str, SSF_id: int) -> ResType:
 
 
 def write(ip: str, key: str, value: int | str, SSF_id: int) -> ResType:
+    step_id = 1
     log_ip = log_nodes_ip_list[hash_func(ip)]
-    global step_id
-    step_id += 1
+    global step_id_dict
+    if ip in step_id_dict:
+        if key in step_id_dict[ip]:
+            step_id = step_id_dict[ip][key]
+        else:
+            step_id_dict[ip][key] = 1
+    else:
+        step_id_dict[ip] = {key: 1}
     resp = client.post(
         f"http://{log_ip}/write",
         params={
@@ -74,8 +89,10 @@ def write(ip: str, key: str, value: int | str, SSF_id: int) -> ResType:
         timeout=None,
     )
     resp = ResType(**json.loads(resp.content))
+    step_id_dict[ip][key] += 1
     # print(resp)
     if resp.status != 1:
+        step_id_dict[ip][key] -= 1
         raise Exception(resp.message)
     return resp
 
@@ -92,6 +109,11 @@ def exit(ip: str, SSF_id: int):
     resp = ResType(**json.loads(resp.content))
     if resp.status != 1:
         raise Exception(resp.message)
+
+
+def restart():
+    global step_id_dict
+    step_id_dict = {}
 
 
 if __name__ == "__main__":
