@@ -53,25 +53,27 @@ class FUNC(Process):
         # 只能在run中获取id, 因为此事ident才有值
         self.ssf_id = int(str(self.prefix) + str(self.ident))
         self.gen_test_cmds()
-        self.start_barrier.wait()
+        # self.start_barrier.wait()
         try:
             self.run_test()
         except Exception as e:
+            print(e)
             if not self.flag:
                 self.flag = True
                 self.run_test()
-            else:
-                print(e)
+
         finally:
-            self.exit_wrapper()
+            self.exit_func()
             self.dump_result()
 
     def gen_test_cmds(self):
         key_list_temp = [chr(i) for i in range(ord("a"), ord("z") + 1)]  # 26个英文字母
+        # 将字母两两组合
         for i in range(len(key_list_temp)):
             for j in range(i + 1, len(key_list_temp)):
                 self.key_list.append(key_list_temp[i] + key_list_temp[j])
-        # self.key_list = random.sample(key_list_temp, 20)
+
+        self.key_list = random.sample(self.key_list, 300)
         self.cmd_list = [
             CmdItem("w", random.choice(self.ip_list), k, 1) for k in self.key_list
         ]  # 先执行wrtie，保证一定有这些key
@@ -90,8 +92,10 @@ class FUNC(Process):
 
         random.shuffle(temp)
         self.cmd_list.extend(temp)
+        self.cmd_list = self.cmd_list
 
     def run_test(self):
+        # print(f"test len {len(self.cmd_list)}")
         for i, cmd in enumerate(self.cmd_list):
             if (not self.flag) and (i == len(self.cmd_list) * 1 / 2):
                 raise Exception()
@@ -107,6 +111,8 @@ class FUNC(Process):
                         self.retry_result.append(Result(cmd.key, res.data))
 
     def dump_result(self):
+        print(f"dump result: {len(self.result)}")
+        print(f"dump retry_result: {len(self.retry_result)}")
         with open(f"./{self.id}.result", "w") as f:
             for item in self.result:
                 f.write(f"key: {item.key}, data:{item.val}" + "\n")
@@ -122,10 +128,10 @@ class FUNC(Process):
             try:
                 res = lib.read(ip, key, self.ssf_id)
                 return res
-            except:
+            except Exception as e:
                 err_num += 1
-
-        raise Exception()
+                if err_num == 3:
+                    raise e
 
     def write_wrapper(self, ip: str, key: str, value: int | str):
         err_num = 0
@@ -133,23 +139,27 @@ class FUNC(Process):
             try:
                 res = lib.write(ip, key, value, self.ssf_id)
                 return res
-            except:
+            except Exception as e:
+                print(e)
                 err_num += 1
+                if err_num == 3:
+                    raise e
 
-        raise Exception()
-
-    def exit_wrapper(self):
+    def exit_wrapper(self, ip: str):
         err_num = 0
-        ip_set = set(map(lambda x: x.ip, self.cmd_list))
         while err_num < 3:
             try:
-                for ip in ip_set:
-                    lib.exit(ip, self.ssf_id)
+                lib.exit(ip, self.ssf_id)
                 return
-            except:
+            except Exception as e:
                 err_num += 1
+                if err_num == 3:
+                    raise e
 
-        raise Exception()
+    def exit_func(self):
+        ip_set = set(map(lambda x: x.ip, self.cmd_list))
+        for ip in ip_set:
+            self.exit_wrapper(ip)
 
 
 if __name__ == "__main__":

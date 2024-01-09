@@ -5,7 +5,7 @@ import socket
 import json
 
 # log_nodes_ip_list = ['192.168.0.2', '192.168.0.3']
-log_nodes_ip_list = ["192.168.0.101:8080", "192.168.0.102:8000"]
+log_nodes_ip_list = ["192.168.0.101:8080", "192.168.0.102:8080"]
 keys_dict = {}
 step_id = 0
 
@@ -41,16 +41,20 @@ def read(ip: str, key: str, SSF_id: int) -> ResType:
     # global client
     resp = client.post(
         f"http://{log_ip}/read",
-        json={
+        params={
             "db_address": ip,
             "key": key,
             "ssf_id": SSF_id,
             "step_id": step_id,
             "version": 1,
         },
+        timeout=None,
     )
-    # return orjson.loads(resp.content)
-    return ResType(**json.loads(resp.content))
+    resp = ResType(**json.loads(resp.content))
+    # print(resp)
+    if resp.status != 1:
+        raise Exception(resp.message)
+    return resp
 
 
 def write(ip: str, key: str, value: int | str, SSF_id: int) -> ResType:
@@ -59,7 +63,7 @@ def write(ip: str, key: str, value: int | str, SSF_id: int) -> ResType:
     step_id += 1
     resp = client.post(
         f"http://{log_ip}/write",
-        json={
+        params={
             "db_address": ip,
             "key": key,
             "value": value,
@@ -67,23 +71,44 @@ def write(ip: str, key: str, value: int | str, SSF_id: int) -> ResType:
             "step_id": step_id,
             "version": 1,
         },
+        timeout=None,
     )
-    return json.loads(resp.content)
+    resp = ResType(**json.loads(resp.content))
+    # print(resp)
+    if resp.status != 1:
+        raise Exception(resp.message)
+    return resp
 
 
 def exit(ip: str, SSF_id: int):
     log_ip = log_nodes_ip_list[hash_func(ip)]
-    client.post(
+    resp = client.post(
         f"http://{log_ip}/clear",
-        json={
+        params={
             "ssf_id": SSF_id,
         },
     )
-    client.close()
+    # client.close()
+    resp = ResType(**json.loads(resp.content))
+    if resp.status != 1:
+        raise Exception(resp.message)
 
 
 if __name__ == "__main__":
-    resp = read("192.168.0.1", "height", 1)
-    print(resp)
+    # resp = write("192.168.0.103:6379", "height", 1)
+    # print(resp)
     # resp = write("192.168.0.1", "height", 1, 1, 1)
     # print(resp)
+    resp = client.post(
+        f"http://192.168.0.101:8080/write",
+        parasm={
+            "db_address": "192.168.0.103:6379",
+            "key": "a",
+            "value": 1,
+            "ssf_id": 1,
+            "step_id": 1,
+            "version": 1,
+        },
+    )
+    exit("192.168.0.104:6379", 10)
+    client.close()
