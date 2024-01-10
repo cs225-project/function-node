@@ -17,7 +17,7 @@ class RespException(Exception):
     pass
 
 
-class LogRequest:
+class LogClient:
     def __init__(self) -> None:
         self.log_nodes_ip_list = ["192.168.0.101:8080", "192.168.0.102:8080"]
         self.step_id_dict: dict[str, dict[str, int]] = {}

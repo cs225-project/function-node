@@ -53,7 +53,7 @@ class FUNC(Process):
         # 只能在run中获取id, 因为此事ident才有值
         self.ssf_id = int(str(self.prefix) + str(self.ident))
         self.gen_test_cmds()
-        self.client = lib.LogRequest()
+        self.client = lib.LogClient()
         # self.start_barrier.wait()
         try:
             self.run_test()
