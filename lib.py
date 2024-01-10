@@ -34,8 +34,12 @@ class ResType:
     message: str = " "
 
 
+class RespException(Exception):
+    pass
+
+
 # ip: 数据库的地址
-def read(ip: str, key: str, SSF_id: int) -> ResType:
+def read(ip: str, key: str, SSF_id: int, err_num: int = 3) -> ResType:
     step_id = 1
     log_ip = log_nodes_ip_list[hash_func(ip)]
     global step_id_dict
@@ -47,27 +51,40 @@ def read(ip: str, key: str, SSF_id: int) -> ResType:
     else:
         step_id_dict[ip] = {key: 1}
     # global client
-    resp = client.post(
-        f"http://{log_ip}/read",
-        params={
-            "db_address": ip,
-            "key": key,
-            "ssf_id": SSF_id,
-            "step_id": step_id,
-            "version": 1,
-        },
-        timeout=None,
-    )
-    resp = ResType(**json.loads(resp.content))
-    # print(resp)
-    if resp.status != 1:
-        raise Exception(resp.message)
-    return resp
+
+    for i in range(err_num):
+        try:
+            resp = client.post(
+                f"http://{log_ip}/read",
+                params={
+                    "db_address": ip,
+                    "key": key,
+                    "ssf_id": SSF_id,
+                    "step_id": step_id,
+                    "version": 1,
+                },
+                timeout=None,
+            )
+            resp = ResType(**json.loads(resp.content))
+            if resp.status != 1:
+                raise RespException(resp.message)
+
+            return resp
+
+        except RespException as e:
+            raise e
+
+        except Exception as e:
+            if i == err_num - 1:
+                raise e
 
 
-def write(ip: str, key: str, value: int | str, SSF_id: int) -> ResType:
-    step_id = 1
+def write(
+    ip: str, key: str, value: int | str, SSF_id: int, err_num: int = 3
+) -> ResType:
     log_ip = log_nodes_ip_list[hash_func(ip)]
+
+    step_id = 1
     global step_id_dict
     if ip in step_id_dict:
         if key in step_id_dict[ip]:
@@ -76,39 +93,61 @@ def write(ip: str, key: str, value: int | str, SSF_id: int) -> ResType:
             step_id_dict[ip][key] = 1
     else:
         step_id_dict[ip] = {key: 1}
-    resp = client.post(
-        f"http://{log_ip}/write",
-        params={
-            "db_address": ip,
-            "key": key,
-            "value": value,
-            "ssf_id": SSF_id,
-            "step_id": step_id,
-            "version": 1,
-        },
-        timeout=None,
-    )
-    resp = ResType(**json.loads(resp.content))
-    step_id_dict[ip][key] += 1
-    # print(resp)
-    if resp.status != 1:
-        step_id_dict[ip][key] -= 1
-        raise Exception(resp.message)
-    return resp
+
+    for i in range(err_num):
+        try:
+            resp = client.post(
+                f"http://{log_ip}/write",
+                params={
+                    "db_address": ip,
+                    "key": key,
+                    "value": value,
+                    "ssf_id": SSF_id,
+                    "step_id": step_id,
+                    "version": 1,
+                },
+                timeout=None,
+            )
+            resp = ResType(**json.loads(resp.content))
+            if resp.status != 1:
+                raise RespException(resp.message)
+
+            step_id_dict[ip][key] += 1
+            return resp
+
+        except RespException as e:
+            raise e
+
+        except Exception as e:
+            if i == err_num - 1:
+                raise e
 
 
-def exit(ip: str, SSF_id: int):
+def exit(ip: str, SSF_id: int, err_num: int = 3):
     log_ip = log_nodes_ip_list[hash_func(ip)]
-    resp = client.post(
-        f"http://{log_ip}/clear",
-        params={
-            "ssf_id": SSF_id,
-        },
-    )
+
+    for i in range(err_num):
+        try:
+            resp = client.post(
+                f"http://{log_ip}/clear",
+                params={
+                    "ssf_id": SSF_id,
+                },
+            )
+            resp = ResType(**json.loads(resp.content))
+            if resp.status != 1:
+                raise RespException(resp.message)
+
+            return
+
+        except RespException as e:
+            raise e
+
+        except Exception as e:
+            if i == err_num - 1:
+                raise e
+
     # client.close()
-    resp = ResType(**json.loads(resp.content))
-    if resp.status != 1:
-        raise Exception(resp.message)
 
 
 def restart():

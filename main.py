@@ -60,6 +60,7 @@ class FUNC(Process):
             print(e)
             if not self.flag:
                 self.flag = True
+                lib.restart()
                 self.run_test()
 
         finally:
@@ -73,14 +74,15 @@ class FUNC(Process):
             for j in range(i + 1, len(key_list_temp)):
                 self.key_list.append(key_list_temp[i] + key_list_temp[j])
 
-        self.key_list = random.sample(self.key_list, 300)
+        self.key_list = random.sample(key_list_temp, 10)
+        # self.key_list = random.sample(self.key_list, 10)
         self.cmd_list = [
             CmdItem("w", random.choice(self.ip_list), k, 1) for k in self.key_list
         ]  # 先执行wrtie，保证一定有这些key
 
         temp: list[CmdItem] = []
         for cmd in self.cmd_list:
-            for _ in range(5):
+            for _ in range(30):
                 temp.append(
                     CmdItem(
                         random.choice(["w", "r"]),
@@ -102,9 +104,9 @@ class FUNC(Process):
 
             match cmd.op:
                 case "w":
-                    self.write_wrapper(cmd.ip, cmd.key, cmd.val)
+                    self.write_func(cmd.ip, cmd.key, cmd.val)
                 case "r":
-                    res = self.read_wrapper(cmd.ip, cmd.key)
+                    res = self.read_func(cmd.ip, cmd.key)
                     if not self.flag:
                         self.result.append(Result(cmd.key, res.data))
                     else:
@@ -122,39 +124,17 @@ class FUNC(Process):
                 for item in self.retry_result:
                     f.write(f"key: {item.key}, data:{item.val}" + "\n")
 
-    def read_wrapper(self, ip: str, key: str):
-        err_num = 0
-        while err_num < 3:
-            try:
-                res = lib.read(ip, key, self.ssf_id)
-                return res
-            except Exception as e:
-                err_num += 1
-                if err_num == 3:
-                    raise e
+    def read_func(self, ip: str, key: str):
+        res = lib.read(ip, key, self.ssf_id)
+        return res
 
-    def write_wrapper(self, ip: str, key: str, value: int | str):
-        err_num = 0
-        while err_num < 3:
-            try:
-                res = lib.write(ip, key, value, self.ssf_id)
-                return res
-            except Exception as e:
-                print(e)
-                err_num += 1
-                if err_num == 3:
-                    raise e
+    def write_func(self, ip: str, key: str, value: int | str):
+        res = lib.write(ip, key, value, self.ssf_id)
+        return res
 
     def exit_wrapper(self, ip: str):
-        err_num = 0
-        while err_num < 3:
-            try:
-                lib.exit(ip, self.ssf_id)
-                return
-            except Exception as e:
-                err_num += 1
-                if err_num == 3:
-                    raise e
+        lib.exit(ip, self.ssf_id)
+        return
 
     def exit_func(self):
         ip_set = set(map(lambda x: x.ip, self.cmd_list))
