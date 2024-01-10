@@ -105,7 +105,7 @@ class LogClient:
                 if i == err_num - 1:
                     raise e
 
-    def exit(self, ip: str, SSF_id: int, err_num: int = 3):
+    def clear(self, ip: str, SSF_id: int, err_num: int = 3):
         log_ip = self.con_hash.get_node(ip)
 
         for i in range(err_num):
@@ -129,11 +129,11 @@ class LogClient:
                 if i == err_num - 1:
                     raise e
 
-            finally:
-                self.client.close()
-
     def restart(self):
         self.step_id_dict = {}
+
+    def exit(self):
+        self.client.close()
 
 
 if __name__ == "__main__":

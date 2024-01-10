@@ -133,14 +133,15 @@ class FUNC(Process):
         res = self.client.write(ip, key, value, self.ssf_id)
         return res
 
-    def exit_wrapper(self, ip: str):
-        self.client.exit(ip, self.ssf_id)
-        return
-
-    def exit_func(self):
+    def clear_func(self):
         ip_set = set(map(lambda x: x.ip, self.cmd_list))
         for ip in ip_set:
-            self.exit_wrapper(ip)
+            self.client.clear(ip, self.ssf_id)
+
+    def exit_func(self):
+        self.clear_func()
+        self.client.exit()
+        return
 
 
 if __name__ == "__main__":
