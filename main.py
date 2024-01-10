@@ -53,6 +53,7 @@ class FUNC(Process):
         # 只能在run中获取id, 因为此事ident才有值
         self.ssf_id = int(str(self.prefix) + str(self.ident))
         self.gen_test_cmds()
+        self.client = lib.LogRequest()
         # self.start_barrier.wait()
         try:
             self.run_test()
@@ -60,7 +61,7 @@ class FUNC(Process):
             print(e)
             if not self.flag:
                 self.flag = True
-                lib.restart()
+                self.client.restart()
                 self.run_test()
 
         finally:
@@ -125,15 +126,15 @@ class FUNC(Process):
                     f.write(f"key: {item.key}, data:{item.val}" + "\n")
 
     def read_func(self, ip: str, key: str):
-        res = lib.read(ip, key, self.ssf_id)
+        res = self.client.read(ip, key, self.ssf_id)
         return res
 
     def write_func(self, ip: str, key: str, value: int | str):
-        res = lib.write(ip, key, value, self.ssf_id)
+        res = self.client.write(ip, key, value, self.ssf_id)
         return res
 
     def exit_wrapper(self, ip: str):
-        lib.exit(ip, self.ssf_id)
+        self.client.exit(ip, self.ssf_id)
         return
 
     def exit_func(self):
