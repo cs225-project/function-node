@@ -46,7 +46,6 @@ class LogClient:
                         "key": key,
                         "ssf_id": SSF_id,
                         "step_id": step_id,
-                        "version": 1,
                     },
                     timeout=None,
                 )

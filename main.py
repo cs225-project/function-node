@@ -4,6 +4,13 @@ from multiprocessing import Process, Barrier
 from multiprocessing.synchronize import Barrier as Barrier_
 import random
 from dataclasses import dataclass
+import time
+
+
+def chooseRW(i: int, total: int, ratio: float = 0.3):
+    if i <= int(total * ratio):
+        return "r"
+    return "w"
 
 
 def remove_dots_to_int(ip: str) -> int:
@@ -34,12 +41,13 @@ class FUNC(Process):
         self.prefix = prefix
         self.start_barrier = start_barrier
         self.end_barrier = end_barrier
-        self.ip_list: list[str] = [
-            "192.168.0.103:6379",
-            "192.168.0.104:6379",
-            "192.168.0.105:6379",
-            "192.168.0.106:6379",
-        ]
+        self.ip_list: list[str] = ["192.168.0.103:6379"]
+        # self.ip_list: list[str] = [
+        #     "192.168.0.103:6379",
+        #     "192.168.0.104:6379",
+        #     "192.168.0.105:6379",
+        #     "192.168.0.106:6379",
+        # ]
 
         self.result: list[Result] = []
         self.retry_result: list[Result] = []
@@ -56,7 +64,10 @@ class FUNC(Process):
         self.client = lib.LogClient()
         # self.start_barrier.wait()
         try:
+            time1 = time.time()
             self.run_test()
+            time2 = time.time()
+            print(time2 - time1)
         except Exception as e:
             print(e)
             if not self.flag:
@@ -69,11 +80,11 @@ class FUNC(Process):
             self.dump_result()
 
     def gen_test_cmds(self):
-        key_list_temp = [chr(i) for i in range(ord("a"), ord("z") + 1)]  # 26个英文字母
-        # 将字母两两组合
-        for i in range(len(key_list_temp)):
-            for j in range(i + 1, len(key_list_temp)):
-                self.key_list.append(key_list_temp[i] + key_list_temp[j])
+        key_list_temp = [chr(i) for i in range(ord("a"), ord("z") + 1)]
+
+        # for i in range(len(key_list_temp)):
+        #     for j in range(i + 1, len(key_list_temp)):
+        #         self.key_list.append(key_list_temp[i] + key_list_temp[j])
 
         self.key_list = random.sample(key_list_temp, 10)
         # self.key_list = random.sample(self.key_list, 10)
@@ -81,12 +92,13 @@ class FUNC(Process):
             CmdItem("w", random.choice(self.ip_list), k, 1) for k in self.key_list
         ]  # 先执行wrtie，保证一定有这些key
 
+        total = 120
         temp: list[CmdItem] = []
         for cmd in self.cmd_list:
-            for _ in range(30):
+            for i in range(total):
                 temp.append(
                     CmdItem(
-                        random.choice(["w", "r"]),
+                        chooseRW(i, 10 * total, 0.75),
                         cmd.ip,
                         cmd.key,
                         random.randint(1, 100),
@@ -100,8 +112,8 @@ class FUNC(Process):
     def run_test(self):
         # print(f"test len {len(self.cmd_list)}")
         for i, cmd in enumerate(self.cmd_list):
-            if (not self.flag) and (i == len(self.cmd_list) * 1 / 2):
-                raise Exception()
+            # if (not self.flag) and (i == len(self.cmd_list) * 1 / 2):
+            #     raise Exception()
 
             match cmd.op:
                 case "w":
