@@ -1,20 +1,21 @@
-import traceback
 import hashlib
 import bisect
 import re
 
 
 class ConsistentHash:
-    interleave_count = 40
-    hasher = None
-
-    def __init__(self, objects=None):
-        self.keys = []
+    def __init__(
+        self, objects: list | dict, intereave_count: int = 40, hasher: int = None
+    ):
+        self.keys: list[str] = []
         self.key_node = {}
         self.nodes = []
         self.index = 0
         self.weights = {}
         self.total_weight = 0
+
+        self.interleave_count = intereave_count
+        self.hasher = hasher
 
         self.add_nodes(objects)
 
@@ -78,10 +79,8 @@ class ConsistentHash:
             for i in range(4):
                 yield self._hash_val(b_key, lambda x: x + i * 4)
 
-    def get_node(self, string_key):
+    def get_node(self, string_key: str) -> str:
         pos = self.get_node_pos(string_key)
-        if pos is None:
-            return None
         return self.key_node[self.keys[pos]]
 
     def get_node_pos(self, string_key):
